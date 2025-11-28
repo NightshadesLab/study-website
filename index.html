@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>StudyHub — Find quality study material</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="index.html"><img src="assets/logo.png" alt="" class="logo">StudyHub</a>
+
+      <div class="search-area">
+        <input id="globalSearch" placeholder="Search topics, resources..." aria-label="Search" />
+        <button id="searchBtn">Search</button>
+      </div>
+
+      <nav class="nav-links">
+        <button id="loginBtn" class="ghost">Login / Signup</button>
+        <a href="bookmarks.html" id="bookmarksLink">Bookmarks <span id="bmCount" class="badge">0</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap main">
+    <section class="hero">
+      <h1>Find quality study material in one place</h1>
+      <p>Browse by subject or search instantly. Everything is fast and free to host on GitHub Pages.</p>
+      <div class="cta">
+        <a href="subject.html?subject=mathematics" class="btn">Start with Mathematics</a>
+        <a href="#browse" class="btn outline">Browse all subjects</a>
+      </div>
+    </section>
+
+    <section id="browse" class="subjects">
+      <h2>Subjects</h2>
+      <div class="grid" id="subjectGrid">
+        <!-- JS will inject cards here -->
+      </div>
+    </section>
+
+    <section class="how">
+      <h3>How it works</h3>
+      <ol>
+        <li>Search or browse a subject</li>
+        <li>Open a topic and view resources</li>
+        <li>Download resources or save them to bookmarks</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <small>StudyHub • Static demo • Store bookmarks locally</small>
+    </div>
+  </footer>
+
+  <!-- Login modal -->
+  <div id="authModal" class="modal" aria-hidden="true">
+    <div class="modal-panel">
+      <button class="close" id="closeAuth">×</button>
+      <h3 id="authTitle">Login</h3>
+
+      <div id="authForms">
+        <form id="loginForm" class="authForm">
+          <label>
+            Email
+            <input type="email" id="loginEmail" required>
+          </label>
+          <label>
+            Password
+            <input type="password" id="loginPass" required>
+          </label>
+          <div class="row">
+            <button type="submit" class="btn">Login</button>
+            <button type="button" id="showSignup" class="ghost">Create account</button>
+          </div>
+        </form>
+
+        <form id="signupForm" class="authForm hidden">
+          <label>
+            Full name
+            <input type="text" id="signupName" required>
+          </label>
+          <label>
+            Email
+            <input type="email" id="signupEmail" required>
+          </label>
+          <label>
+            Password
+            <input type="password" id="signupPass" required>
+          </label>
+          <div class="row">
+            <button type="submit" class="btn">Create account</button>
+            <button type="button" id="showLogin" class="ghost">Back to login</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="authStatus" class="muted small"></div>
+    </div>
+  </div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
