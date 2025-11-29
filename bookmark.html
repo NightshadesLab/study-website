@@ -5,17 +5,19 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Bookmarks — StudyHub</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* small helpers for this page only */
+    .hidden { display:none; }
+    .debug { margin-top:12px; font-size:0.9rem; color:#666; }
+    .list .item { background: #fff; padding:12px; border-radius:10px; margin-bottom:10px; }
+    .actions { margin-top:8px; display:flex; gap:8px; align-items:center; }
+  </style>
 </head>
 <body>
-
   <!-- TOPBAR -->
   <header class="topbar">
     <div class="wrap">
-      <a class="brand" href="index.html">
-        <img class="logo" src="logo.png" alt="Logo">
-        StudyHub
-      </a>
-
+      <a class="brand" href="index.html">StudyHub</a>
       <nav class="nav-links">
         <a href="index.html">Home</a>
         <a href="bookmarks.html" class="active">Bookmarks</a>
@@ -29,10 +31,19 @@
       <h1>Your Bookmarks</h1>
       <p class="muted">Saved notes and resources appear here.</p>
 
-      <div id="bookmarkList" class="list"></div>
+      <div id="bookmarkList" class="list" aria-live="polite"></div>
 
-      <div id="emptyState" class="muted hidden" style="margin-top:15px;">
-        You haven’t added any bookmarks yet.
+      <div id="emptyState" class="muted" style="margin-top:12px;">You haven’t added any bookmarks yet.</div>
+
+      <div id="fallbackNotice" class="debug hidden">
+        <strong>Fallback info:</strong> Could not find `renderBookmarksPage()` in <code>app.js</code>.
+        The page tried to read localStorage keys that include the word "bookmark" and these were found:
+        <span id="foundKeys"></span>
+      </div>
+
+      <div id="consoleHint" class="debug">
+        If this page is empty, open the browser console (F12 → Console) and look for errors. If you see an error
+        like <code>GET app.js 404</code> or <code>Uncaught ReferenceError</code>, the script failed to load or has a runtime issue.
       </div>
     </section>
   </main>
@@ -42,6 +53,122 @@
     <div class="wrap"><small>StudyHub</small></div>
   </footer>
 
+  <!-- Scripts -->
   <script src="app.js" defer></script>
+
+  <!-- Inline fallback renderer: tries app.js first, then localStorage heuristics -->
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('bookmarkList');
+    const emptyState = document.getElementById('emptyState');
+    const fallbackNotice = document.getElementById('fallbackNotice');
+    const foundKeysEl = document.getElementById('foundKeys');
+
+    // If app.js provides renderBookmarksPage(), prefer that (keeps one source of truth)
+    if (typeof renderBookmarksPage === 'function') {
+      // Let the app.js function populate the list.
+      try {
+        renderBookmarksPage();
+        // hide empty state only if app.js rendered something. We can't know exactly, so rely on app.js to handle it.
+        emptyState.style.display = 'none';
+      } catch (err) {
+        console.error('renderBookmarksPage() failed:', err);
+        showFallback();
+      }
+      return;
+    }
+
+    // Fallback: try to find bookmark-related keys in localStorage
+    function showFallback() {
+      fallbackNotice.classList.remove('hidden');
+
+      // gather keys that look like bookmarks
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        if (k.toLowerCase().includes('bookmark') || k.toLowerCase().includes('studyhub')) keys.push(k);
+      }
+
+      foundKeysEl.textContent = keys.length ? keys.join(', ') : 'no keys found';
+
+      // try known keys (common patterns), in order
+      const triedKeys = [
+        'studyhub_bookmarks_v1_anon',
+        'studyhub_bookmarks_v1',
+        'bookmarks',
+        'studyhub_bookmarks_v1_'  // prefix case
+      ].concat(keys);
+
+      let data = null;
+      let usedKey = null;
+      for (const k of triedKeys) {
+        try {
+          const raw = localStorage.getItem(k);
+          if (!raw) continue;
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length >= 0) {
+            data = parsed;
+            usedKey = k;
+            break;
+          }
+        } catch (e) {
+          // ignore JSON errors
+        }
+      }
+
+      // If nothing found, show empty state and stop
+      if (!data) {
+        emptyState.style.display = '';
+        container.innerHTML = '';
+        return;
+      }
+
+      // If data is array of IDs (strings) we can't resolve resource metadata here.
+      // Show them raw and suggest using the main app.js to resolve to titles.
+      if (data.length && typeof data[0] === 'string') {
+        container.innerHTML = data.map(id => `
+          <div class="item">
+            <h4>${id}</h4>
+            <p class="muted">Saved resource id (details will appear when app.js is loaded)</p>
+          </div>
+        `).join('');
+        emptyState.style.display = 'none';
+        return;
+      }
+
+      // If data is array of objects with title/link -> render normally
+      container.innerHTML = data.map(item => {
+        const title = item.title || item.id || 'Untitled';
+        const desc = item.description || '';
+        const link = item.link || item.file || '#';
+        const isPdf = typeof link === 'string' && link.endsWith('.pdf');
+        return `
+          <div class="item">
+            <h4>${escapeHtml(title)}</h4>
+            <p class="muted">${escapeHtml(desc)}</p>
+            <div class="actions">
+              <a class="btn outline" href="${escapeAttr(link)}" ${isPdf ? 'download' : 'target="_blank"'}>Open</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+      emptyState.style.display = 'none';
+    }
+
+    // helper escapes
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function escapeAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
+
+    // If app.js is not ready after a short delay, run fallback
+    // This allows app.js to load (defer) when available.
+    setTimeout(() => {
+      if (typeof renderBookmarksPage === 'function') {
+        try { renderBookmarksPage(); emptyState.style.display='none'; return; } catch(e){ console.warn(e); }
+      }
+      showFallback();
+    }, 250);
+  });
+  </script>
 </body>
 </html>
