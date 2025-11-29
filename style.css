@@ -7,7 +7,7 @@
   <title>StudyHub</title>
   <style>
     :root{
-      --bg: linear-gradient(135deg, #1abc9c, #3498db); /* green-blue gradient */
+      --bg: linear-gradient(135deg, #1abc9c, #3498db);
       --card: #ffffff;
       --muted: #6b7280;
       --accent: #1f2937;
@@ -35,13 +35,13 @@ body::before {
   position: fixed;
   top: 50%;
   left: 50%;
-  width: 300px; /* adjust as needed */
+  width: 300px;
   height: auto;
   max-width: 80%;
   transform: translate(-50%, -50%);
-  background: url('assets/logo.png') no-repeat center/contain;
-  opacity: 0.05; /* adjust transparency */
-  pointer-events: none; /* allow clicks through */
+  background: url('logo.png') no-repeat center/contain;
+  opacity: 0.05;
+  pointer-events: none;
   z-index: 0;
 }
 
@@ -52,7 +52,6 @@ body::before {
 }
 
 .wrap{max-width:var(--container);margin:0 auto;padding:16px}
-
 .topbar{background:#fff;border-bottom:1px solid #e6e6ea}
 .topbar .wrap{display:flex;align-items:center;gap:12px}
 .brand{font-weight:700;text-decoration:none;color:var(--accent);display:flex;align-items:center;gap:8px}
@@ -95,7 +94,6 @@ body::before {
 .authForm{display:flex;flex-direction:column;gap:8px}
 .authForm input{padding:8px;border-radius:8px;border:1px solid #e6e6ea}
 .row{display:flex;gap:8px;align-items:center}
-
 .hidden{display:none}
 
 @media (max-width:720px){
@@ -108,14 +106,43 @@ body::before {
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="wrap">
-        <a href="#" class="brand"><img src="assets/logo.png" class="logo" alt="Logo">StudyHub</a>
+  <div class="topbar">
+    <div class="wrap">
+      <a href="#" class="brand"><img src="logo.png" class="logo" /> StudyHub</a>
+      <div class="search-area">
+        <input type="text" placeholder="Search bookmarks" />
+        <button>Search</button>
+      </div>
+      <div class="nav-links">
+        <a href="#" class="btn">Login</a>
       </div>
     </div>
+  </div>
+
+  <div class="wrap hero">
     <h1>Welcome to StudyHub</h1>
-    <p>All your resources in one place.</p>
+    <div class="cta">
+      <a href="#" class="btn">Add Bookmark</a>
+      <a href="#" class="btn outline">View Bookmarks</a>
+    </div>
+  </div>
+
+  <div class="wrap subjects">
+    <h2>My Subjects</h2>
+    <div class="grid">
+      <a href="#" class="card">
+        <h3>Mathematics</h3>
+        <p>Algebra and Geometry</p>
+      </a>
+      <a href="#" class="card">
+        <h3>Science</h3>
+        <p>Physics and Chemistry</p>
+      </a>
+    </div>
+  </div>
+
+  <div class="footer">
+    &copy; 2025 StudyHub. All rights reserved.
   </div>
 </body>
 </html>
