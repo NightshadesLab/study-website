@@ -7,22 +7,37 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- TOPBAR -->
   <header class="topbar">
     <div class="wrap">
-      <a class="brand" href="index.html">StudyHub</a>
+      <a class="brand" href="index.html">
+        <img class="logo" src="logo.png" alt="Logo">
+        StudyHub
+      </a>
+
       <nav class="nav-links">
         <a href="index.html">Home</a>
+        <a href="bookmarks.html" class="active">Bookmarks</a>
       </nav>
     </div>
   </header>
 
+  <!-- MAIN -->
   <main class="wrap main">
     <section>
-      <h1>Your bookmarks</h1>
+      <h1>Your Bookmarks</h1>
+      <p class="muted">Saved notes and resources appear here.</p>
+
       <div id="bookmarkList" class="list"></div>
+
+      <div id="emptyState" class="muted hidden" style="margin-top:15px;">
+        You haven’t added any bookmarks yet.
+      </div>
     </section>
   </main>
 
+  <!-- FOOTER -->
   <footer class="footer">
     <div class="wrap"><small>StudyHub</small></div>
   </footer>
