@@ -13,7 +13,7 @@ const DB = {
   ],
   topics: [
     { id: 'algebra', subject: 'mathematics', title: 'Algebra', description: 'Equations, polynomials' },
-    { id: 'calculus', subject: 'mathematics', title: 'Calculus', description: 'Limits, derivatives' },
+    { id: 'calculus', subject: 'mathematics', title: 'Calculculus', description: 'Limits, derivatives' },
     { id: 'kinematics', subject: 'physics', title: 'Kinematics', description: 'Motion and equations' },
     { id: 'java-basics', subject: 'cs', title: 'Java Basics', description: 'OOP, syntax' },
   ],
@@ -52,7 +52,8 @@ function logout() { localStorage.removeItem(STORAGE_CURRENT); updateAuthUI(); }
 
 // Bookmarks
 function bookmarksKeyForUser() {
-  const u = currentUser(); return STORAGE_BOOKMARKS + (u ? ('_' + u.email) : '_anon');
+  const u = currentUser();
+  return STORAGE_BOOKMARKS + (u ? '_' + u.email : '_anon');
 }
 function getBookmarks() { return getJSON(bookmarksKeyForUser(), []); }
 function toggleBookmark(resId) {
@@ -64,8 +65,8 @@ function toggleBookmark(resId) {
 }
 function isBookmarked(resId) { return getBookmarks().includes(resId); }
 function updateBookmarkCount() {
-  const el = document.getElementById('bmCount'); if (!el) return;
-  el.textContent = getBookmarks().length;
+  const el = document.getElementById('bmCount');
+  if (el) el.textContent = getBookmarks().length;
 }
 
 // Basic rendering and routing helpers
@@ -90,6 +91,7 @@ function renderSubjectPage() {
   const sub = DB.subjects.find(s => s.id === sid) || DB.subjects[0];
   document.getElementById('subjectTitle').textContent = sub.title;
   document.getElementById('subjectDesc').textContent = sub.description;
+
   const topics = DB.topics.filter(t => t.subject === sub.id);
   const grid = document.getElementById('topicGrid');
   grid.innerHTML = topics.map(t => `
@@ -104,26 +106,28 @@ function renderTopicPage() {
   const tid = getQueryParam('topic');
   const t = DB.topics.find(x => x.id === tid);
   if (!t) return;
+
   document.getElementById('topicTitle').textContent = t.title;
   document.getElementById('topicDesc').textContent = t.description;
+
   const resources = DB.resources.filter(r => r.topic === t.id);
   const list = document.getElementById('resourceList');
+
   list.innerHTML = resources.map(r => `
     <div class="item">
       <h4><a href="resource.html?res=${encodeURIComponent(r.id)}">${r.title}</a></h4>
       <p class="muted">${r.type} • ${r.desc}</p>
       <div style="margin-top:8px">
-        <a class="btn" href="${r.file}" ${r.file && r.file.endsWith('.pdf') ? 'download' : 'target="_blank"'}>Open</a>
+        <a class="btn" href="${r.file}" ${r.file.endsWith('.pdf') ? 'download' : 'target="_blank"'}>Open</a>
         <button class="btn outline" data-res="${r.id}">${isBookmarked(r.id) ? 'Saved' : 'Save'}</button>
       </div>
     </div>
   `).join('');
-  // attach bookmark handlers
+
   Array.from(list.querySelectorAll('button[data-res]')).forEach(b => {
     b.addEventListener('click', e => {
       const id = e.currentTarget.dataset.res;
       toggleBookmark(id);
-      // update label
       e.currentTarget.textContent = isBookmarked(id) ? 'Saved' : 'Save';
     });
   });
@@ -133,28 +137,44 @@ function renderResourcePage() {
   const rid = getQueryParam('res');
   const r = DB.resources.find(x => x.id === rid);
   if (!r) return;
+
   document.getElementById('resTitle').textContent = r.title;
   document.getElementById('resMeta').textContent = `${r.type} • Topic: ${r.topic}`;
   document.getElementById('resDesc').textContent = r.desc;
+
   const dl = document.getElementById('downloadBtn');
   dl.href = r.file || '#';
-  dl.setAttribute('target', r.file && r.file.startsWith('http') ? '_blank' : '_self');
+  dl.target = r.file.startsWith('http') ? '_blank' : '_self';
+
   const bm = document.getElementById('bookmarkBtn');
   bm.textContent = isBookmarked(r.id) ? 'Remove from bookmarks' : 'Save to bookmarks';
-  bm.onclick = () => { toggleBookmark(r.id); bm.textContent = isBookmarked(r.id) ? 'Remove from bookmarks' : 'Save to bookmarks'; };
+  bm.onclick = () => {
+    toggleBookmark(r.id);
+    bm.textContent = isBookmarked(r.id) ? 'Remove from bookmarks' : 'Save to bookmarks';
+  };
 }
 
 function renderBookmarksPage() {
   const ids = getBookmarks();
   const list = document.getElementById('bookmarkList');
   if (!list) return;
-  if (!ids.length) { list.innerHTML = '<p class="muted">No bookmarks yet.</p>'; return; }
-  const items = ids.map(id => DB.resources.find(r => r.id === id)).filter(Boolean);
+
+  if (!ids.length) {
+    list.innerHTML = '<p class="muted">No bookmarks yet.</p>';
+    return;
+  }
+
+  const items = ids
+    .map(id => DB.resources.find(r => r.id === id))
+    .filter(Boolean);
+
   list.innerHTML = items.map(r => `
     <div class="item">
       <h4><a href="resource.html?res=${encodeURIComponent(r.id)}">${r.title}</a></h4>
       <p class="muted">${r.type} • ${r.desc}</p>
-      <div style="margin-top:8px"><a class="btn" href="${r.file}" ${r.file && r.file.endsWith('.pdf') ? 'download' : 'target="_blank"'}>Open</a></div>
+      <div style="margin-top:8px">
+        <a class="btn" href="${r.file}" ${r.file.endsWith('.pdf') ? 'download' : 'target="_blank"'}>Open</a>
+      </div>
     </div>
   `).join('');
 }
@@ -162,24 +182,40 @@ function renderBookmarksPage() {
 function doSearch(query) {
   const q = (query || '').trim().toLowerCase();
   if (!q) return alert('Type a search term');
-  // search titles and descriptions in resources, topics, subjects
-  const resFromResources = DB.resources.filter(r => (r.title + ' ' + r.desc).toLowerCase().includes(q));
-  const resFromTopics = DB.topics.filter(t => (t.title + ' ' + t.description).toLowerCase().includes(q))
-    .flatMap(t => DB.resources.filter(r => r.topic === t.id));
-  const resFromSubjects = DB.subjects.filter(s => (s.title + ' ' + s.description).toLowerCase().includes(q))
-    .flatMap(s => DB.topics.filter(t => t.subject === s.id).flatMap(t => DB.resources.filter(r => r.topic === t.id)));
-  const results = Array.from(new Set([...resFromResources, ...resFromTopics, ...resFromSubjects]));
-  // simple results rendering in alert or navigate to topic / resource
-  if (!results.length) return alert('No results found for: ' + q);
-  // if single result open resource page
+
+  const fromResources = DB.resources.filter(r =>
+    (r.title + r.desc).toLowerCase().includes(q)
+  );
+
+  const fromTopics = DB.topics.filter(t =>
+    (t.title + t.description).toLowerCase().includes(q)
+  ).flatMap(t => DB.resources.filter(r => r.topic === t.id));
+
+  const fromSubjects = DB.subjects.filter(s =>
+    (s.title + s.description).toLowerCase().includes(q)
+  ).flatMap(s =>
+    DB.topics.filter(t => t.subject === s.id)
+      .flatMap(t => DB.resources.filter(r => r.topic === t.id))
+  );
+
+  const results = Array.from(new Set([...fromResources, ...fromTopics, ...fromSubjects]));
+
+  if (!results.length) return alert('No results for: ' + q);
+
   if (results.length === 1) {
     location.href = 'resource.html?res=' + encodeURIComponent(results[0].id);
     return;
   }
-  // otherwise show results page built on index.html for simplicity
-  const html = results.map(r => `<li><a href="resource.html?res=${r.id}">${r.title}</a> — <span class="muted">${r.type}</span><div class="muted">${r.desc}</div></li>`).join('');
-  const win = window.open('', '_blank', 'noopener');
-  win.document.write(`<title>Search: ${q}</title><style>body{font-family:Arial;padding:16px}li{margin-bottom:10px}</style><h2>Results for "${q}"</h2><ul>${html}</ul>`);
+
+  const html = results.map(r => `
+    <li>
+      <a href="resource.html?res=${r.id}">${r.title}</a>
+      <div class="muted">${r.desc}</div>
+    </li>
+  `).join('');
+
+  const win = window.open('', '_blank');
+  win.document.write(`<h2>Results for "${q}"</h2><ul>${html}</ul>`);
   win.document.close();
 }
 
@@ -190,48 +226,83 @@ function wireSearchButtons() {
     ['globalSearch2', 'searchBtn2'],
     ['globalSearch3', 'searchBtn3']
   ];
-  map.forEach(([inputId, btnId]) => {
-    const inp = document.getElementById(inputId), btn = document.getElementById(btnId);
-    if (!inp || !btn) return;
-    btn.addEventListener('click', () => doSearch(inp.value));
-    inp.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(inp.value);});
+
+  map.forEach(([inpId, btnId]) => {
+    const input = document.getElementById(inpId);
+    const btn = document.getElementById(btnId);
+    if (!input || !btn) return;
+
+    btn.addEventListener('click', () => doSearch(input.value));
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') doSearch(input.value);
+    });
   });
 }
 
-// Auth modal wiring
 function updateAuthUI() {
   const current = currentUser();
   const loginBtn = document.getElementById('loginBtn');
   if (!loginBtn) return;
-  if (current) loginBtn.textContent = `Hi, ${current.name}`;
-  else loginBtn.textContent = 'Login / Signup';
+
+  loginBtn.textContent = current ? `Hi, ${current.name}` : 'Login / Signup';
   updateBookmarkCount();
 }
 
 function setupAuthModal() {
   const modal = document.getElementById('authModal');
   if (!modal) return;
-  const openBtn = document.getElementById('loginBtn'), closeBtn = document.getElementById('closeAuth');
-  const loginForm = document.getElementById('loginForm'), signupForm = document.getElementById('signupForm');
-  const showSignup = document.getElementById('showSignup'), showLogin = document.getElementById('showLogin');
+
+  const openBtn = document.getElementById('loginBtn');
+  const closeBtn = document.getElementById('closeAuth');
+  const loginForm = document.getElementById('loginForm');
+  const signupForm = document.getElementById('signupForm');
+  const showSignup = document.getElementById('showSignup');
+  const showLogin = document.getElementById('showLogin');
   const status = document.getElementById('authStatus');
 
-  function openAuth() { modal.setAttribute('aria-hidden','false'); document.getElementById('authTitle').textContent='Login'; loginForm.classList.remove('hidden'); signupForm.classList.add('hidden'); status.textContent=''; }
-  function closeAuth() { modal.setAttribute('aria-hidden','true'); }
+  function openAuth() {
+    modal.setAttribute('aria-hidden', 'false');
+    document.getElementById('authTitle').textContent = 'Login';
+    loginForm.classList.remove('hidden');
+    signupForm.classList.add('hidden');
+    status.textContent = '';
+  }
+
+  function closeAuth() {
+    modal.setAttribute('aria-hidden', 'true');
+  }
 
   openBtn?.addEventListener('click', openAuth);
   closeBtn?.addEventListener('click', closeAuth);
-  showSignup?.addEventListener('click', () => { loginForm.classList.add('hidden'); signupForm.classList.remove('hidden'); document.getElementById('authTitle').textContent='Create account'; });
-  showLogin?.addEventListener('click', () => { loginForm.classList.remove('hidden'); signupForm.classList.add('hidden'); document.getElementById('authTitle').textContent='Login'; });
+
+  showSignup?.addEventListener('click', () => {
+    loginForm.classList.add('hidden');
+    signupForm.classList.remove('hidden');
+    document.getElementById('authTitle').textContent = 'Create account';
+  });
+
+  showLogin?.addEventListener('click', () => {
+    loginForm.classList.remove('hidden');
+    signupForm.classList.add('hidden');
+    document.getElementById('authTitle').textContent = 'Login';
+  });
 
   loginForm?.addEventListener('submit', e => {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim();
     const pass = document.getElementById('loginPass').value;
+
     const res = loginUser(email, pass);
-    if (!res.ok) { status.textContent = res.msg; return; }
+    if (!res.ok) {
+      status.textContent = res.msg;
+      return;
+    }
+
     status.textContent = 'Welcome back';
-    setTimeout(() => { updateAuthUI(); closeAuth(); }, 600);
+    setTimeout(() => {
+      updateAuthUI();
+      closeAuth();
+    }, 500);
   });
 
   signupForm?.addEventListener('submit', e => {
@@ -239,10 +310,17 @@ function setupAuthModal() {
     const name = document.getElementById('signupName').value.trim();
     const email = document.getElementById('signupEmail').value.trim();
     const pass = document.getElementById('signupPass').value;
+
     const res = createUser(name, email, pass);
-    if (!res.ok) { status.textContent = res.msg; return; }
+    if (!res.ok) {
+      status.textContent = res.msg;
+      return;
+    }
+
     status.textContent = 'Account created. You can log in now.';
-    setTimeout(() => { document.getElementById('showLogin').click(); }, 600);
+    setTimeout(() => {
+      showLogin.click();
+    }, 500);
   });
 }
 
@@ -253,7 +331,6 @@ function initPage() {
   updateAuthUI();
   updateBookmarkCount();
 
-  // page-specific render
   const path = window.location.pathname.split('/').pop();
   if (path === 'subject.html') renderSubjectPage();
   if (path === 'topic.html') renderTopicPage();
@@ -261,5 +338,4 @@ function initPage() {
   if (path === 'bookmarks.html') renderBookmarksPage();
 }
 
-// run on DOM loaded
 document.addEventListener('DOMContentLoaded', initPage);
