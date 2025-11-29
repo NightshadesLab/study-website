@@ -9,13 +9,39 @@
 }
 
 *{box-sizing:border-box}
+
 body{
 margin:0;
 font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-background: var(--bg);
 color:var(--accent);
 -webkit-font-smoothing:antialiased;
+background: var(--bg);
+position: relative;
+overflow: hidden;
 }
+
+/* Transparent logo overlay */
+body::before {
+content: "";
+position: fixed;
+top: 50%;
+left: 50%;
+width: 300px; /* adjust as needed */
+height: auto;
+max-width: 80%;
+transform: translate(-50%, -50%);
+background: url('assets/logo.png') no-repeat center/contain;
+opacity: 0.05; /* adjust transparency */
+pointer-events: none; /* allow clicks through */
+z-index: 0;
+}
+
+/* Ensure content is above the logo */
+.wrap, .topbar, .grid, .modal {
+position: relative;
+z-index: 1;
+}
+
 .wrap{max-width:var(--container);margin:0 auto;padding:16px}
 
 .topbar{background:#fff;border-bottom:1px solid #e6e6ea}
